@@ -1,0 +1,5 @@
+a=input().strip()
+b=input().strip()
+c=input().strip()
+d = a.replace(b, c)
+print(d)

@@ -1,0 +1,73 @@
+# Paint Application Extended — TSIS 2
+
+Extended Paint app building on Practice 10 and Practice 11, using only Pygame's built-in capabilities.
+
+## Repository Structure
+
+```
+TSIS2/
+├── paint.py      # Main application — window, toolbar, event loop, Ctrl+S save
+├── tools.py      # All drawing tool classes + flood-fill helper
+└── assets/       # (reserved for icons / custom fonts if added later)
+```
+
+## Features Added (TSIS 2)
+
+| Feature | Where |
+|---|---|
+| Pencil — freehand drawing with round caps | `tools.py → PencilTool` |
+| Straight line with live preview | `tools.py → LineTool` |
+| Three brush sizes (2 / 5 / 10 px) | `paint.py` + all tools |
+| Flood-fill (BFS, exact color match) | `tools.py → FillTool / _flood_fill` |
+| Ctrl+S save as timestamped PNG | `paint.py → save_canvas()` |
+| Text tool — click, type, Enter/Esc | `tools.py → TextTool` |
+| All Practice 10–11 shapes respect brush size | `tools.py → *Tool._draw(size)` |
+
+> **Not re-implemented:** Rectangle, Circle, Eraser (Practice 10); Square, Right Triangle, Equilateral Triangle, Rhombus (Practice 11) — they are extended with brush-size support only.
+
+## Setup
+
+```bash
+pip install pygame
+python paint.py
+```
+
+Requires Python 3.10+ and Pygame 2.x.
+
+## Controls
+
+| Action | Input |
+|---|---|
+| Pencil | `P` or toolbar button |
+| Line | `L` |
+| Fill | `F` |
+| Text | `T` |
+| Eraser | `E` |
+| Rectangle | `R` |
+| Circle | `C` |
+| Square | `S` |
+| Right Triangle | `G` |
+| Equilateral Triangle | `Q` |
+| Rhombus | `H` |
+| Brush small (2 px) | `1` or **S** button |
+| Brush medium (5 px) | `2` or **M** button |
+| Brush large (10 px) | `3` or **L** button |
+| Pick color | Click palette swatch (bottom bar) |
+| Save canvas | `Ctrl+S` → `canvas_YYYYMMDD_HHMMSS.png` |
+
+## Architecture
+
+### `tools.py`
+
+- **`BaseTool`** — common interface: `on_mouse_down`, `on_mouse_move`, `on_mouse_up`, `draw_preview`
+- **`_DragShapeTool`** — base for all click-drag shapes; stores start point, calls `_draw()` on release and in preview
+- **`_flood_fill(surface, start, color)`** — standalone BFS function, used by `FillTool`; iterates with a `deque`, uses `get_at` / `set_at`, stops at color boundaries
+- **`TextTool`** — maintains `active`, `buffer`, and `pos`; `handle_key()` is called from the main event loop; blinking cursor via `get_ticks() // 500 % 2`
+- **`build_tool_registry()`** — returns `{name: instance}` dict consumed by `paint.py`
+
+### `paint.py`
+
+- Canvas is a `pygame.Surface` separate from the screen, blit onto it each frame
+- Preview overlay is drawn directly on the screen (not the canvas), so live shape previews disappear cleanly each frame
+- Status messages (save confirmation) auto-dismiss after 3 seconds
+- Toolbar, canvas, and palette are stacked vertically: 56 px toolbar → canvas → 48 px palette
